@@ -1,0 +1,58 @@
+name: Deploy APT repository
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "repo/**"
+      - "Crika-APT-Repository.zip"
+      - ".github/workflows/deploy-apt-repo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Generate APT indexes and both repository paths
+        run: |
+          mkdir -p _site
+          if [ -f Crika-APT-Repository.zip ]; then
+            unzip -q Crika-APT-Repository.zip -d _site
+          else
+            cp -R repo/. _site/
+          fi
+          bash _site/build-release.sh
+          mkdir -p _site/repo
+          for item in CydiaIcon.png Packages Packages.gz README.md Release build-release.sh index.html pool; do
+            if [ -e "_site/$item" ]; then
+              cp -R "_site/$item" _site/repo/
+            fi
+          done
+
+      - name: Upload repository files
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
