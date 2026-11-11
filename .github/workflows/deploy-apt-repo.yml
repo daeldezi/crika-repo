@@ -43,7 +43,6 @@ jobs:
             cp -R repo/. _site/
           fi
           bash _site/build-release.sh
-          echo "repo.getcrika.app" > _site/CNAME
           mkdir -p _site/repo
           for item in CydiaIcon.png Packages Packages.gz README.md Release build-release.sh index.html pool; do
             if [ -e "_site/$item" ]; then
